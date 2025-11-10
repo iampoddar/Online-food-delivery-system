@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FoodieBay - Order Food Online</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Inter font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Load Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        /* Page transition */
+        .page {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        .page.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Simple loader */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #f97316;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 50px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div id="app" class="max-w-7xl mx-auto min-h-screen bg-white shadow-lg">
+
+        <!-- Header -->
+        <header class="sticky top-0 bg-white shadow-md z-50">
+            <nav class="flex items-center justify-between p-4 border-b">
+                <!-- Logo -->
+                <div class="flex items-center space-x-2">
+                    <i class="ph ph-list text-3xl cursor-pointer md:hidden"></i>
+                    <a href="#" id="logo" class="text-3xl font-bold text-orange-600">FoodieBay</a>
+                </div>
+                
+                <!-- Location (Simulated) -->
+                <div class="hidden md:flex items-center space-x-2">
+                    <i class="ph ph-map-pin text-xl text-orange-600"></i>
+                    <span class="font-medium">Munger, Bihar</span>
+                    <i class="ph ph-caret-down text-sm"></i>
+                </div>
+
+                <!-- Search & Cart -->
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 cursor-pointer">
+                        <i class="ph ph-magnifying-glass text-xl"></i>
+                        <span class="hidden md:block font-medium">Search</span>
+                    </div>
+                    <button id="cart-button" class="relative flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 cursor-pointer">
+                        <i class="ph ph-shopping-cart text-xl"></i>
+                        <span class="hidden md:block font-medium">Cart</span>
+                        <span id="cart-count" class="absolute -top-2 -right-2 bg-orange-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
+                    </button>
+                </div>
+            </nav>
+        </header>
+
+        <!-- Main Content -->
+        <main class="p-4 md:p-8">
+
+            <!-- Page 1: Restaurant List (Home) -->
+            <section id="page-home" class="page active">
+                <h1 class="text-2xl md:text-3xl font-bold mb-6">Restaurants near you</h1>
+                <div id="restaurant-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Loading spinner -->
+                    <div class="loader col-span-full"></div>
+                </div>
+            </section>
+
+            <!-- Page 2: Restaurant Menu -->
+            <section id="page-menu" class="page">
+                <!-- Menu content will be injected here by JS -->
+            </section>
+
+            <!-- Page 3: Cart -->
+            <section id="page-cart" class="page">
+                <!-- Cart content will be injected here by JS -->
+            </section>
+
+            <!-- Page 4: Checkout Simulation -->
+            <section id="page-checkout" class="page">
+                <div class="max-w-lg mx-auto">
+                    <h2 class="text-3xl font-bold mb-6 text-center">Checkout</h2>
+
+                    <!-- 1. Order Summary -->
+                    <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+                        <h3 class="text-xl font-semibold mb-4">Order Summary</h3>
+                        <div id="checkout-summary" class="space-y-2 mb-4">
+                            <!-- Checkout summary items -->
+                        </div>
+                        <div class="border-t pt-4">
+                            <div class="flex justify-between items-center text-lg font-bold">
+                                <span>To Pay:</span>
+                                <span id="checkout-total">₹0.00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. NEW: Payment Method Selection -->
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-semibold mb-4">Select Payment Method</h3>
+                        
+                        <!-- Tab Headers -->
+                        <div class="flex border-b mb-4">
+                            <button id="tab-card" class="flex items-center justify-center py-2 px-4 font-medium text-orange-600 border-b-2 border-orange-600">
+                                <i class="ph ph-credit-card mr-2"></i> Credit/Debit Card
+                            </button>
+                            <button id="tab-upi" class="flex items-center justify-center py-2 px-4 font-medium text-gray-500">
+                                <i class="ph ph-device-mobile mr-2"></i> UPI
+                            </button>
+                        </div>
+
+                        <!-- Tab Content -->
+                        <div id="content-card" class="payment-content space-y-4">
+                            <p class="text-sm text-gray-500">Enter your card details (simulation only)</p>
+                            <!-- Card Form -->
+                            <input type="text" placeholder="Card Number" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-orange-300 outline-none" oninput="this.value = this.value.replace(/[^0-9]/g, '').replace(/(.{4})/g, '$1 ').trim()" maxlength="19">
+                            <div class="flex space-x-4">
+                                <input type="text" placeholder="MM / YY" class="w-1/2 p-3 border rounded-lg focus:ring-2 focus:ring-orange-300 outline-none" oninput="this.value = this.value.replace(/[^0-9/]/g, '').replace(/(\d{2})(\d)/, '$1 / $2').trim()" maxlength="7">
+                                <input type="text" placeholder="CVV" class="w-1/2 p-3 border rounded-lg focus:ring-2 focus:ring-orange-300 outline-none" oninput="this.value = this.value.replace(/[^0-9]/g, '')" maxlength="3">
+                            </div>
+                            <input type="text" placeholder="Name on Card" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-orange-300 outline-none">
+                        </div>
+                        
+                        <div id="content-upi" class="payment-content space-y-4 hidden">
+                             <p class="text-sm text-gray-500">Enter your UPI ID (simulation only)</p>
+                            <!-- UPI Form -->
+                            <input type="text" placeholder="Enter UPI ID (e.g., name@okhdfc)" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-orange-300 outline-none">
+                            <button class="w-full bg-orange-600 text-white py-3 rounded-lg font-medium hover:bg-orange-700 transition">Verify (Simulated)</button>
+                            <p class="text-center text-gray-500 text-sm">Or scan QR code (simulation)</p>
+                            <i class="ph ph-qr-code text-8xl mx-auto text-gray-400 block"></i>
+                        </div>
+                    </div>
+
+                    <!-- 3. Pay Button -->
+                    <div class="mt-6 text-center">
+                        <p class="text-sm text-gray-500 mb-2">This is a simulation. No real payment will be processed.</p>
+                        <button id="simulate-payment-button" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold text-lg hover:bg-green-700 transition duration-300">
+                            Pay Now
+                        </button>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Page 5: Order Success -->
+            <section id="page-success" class="page">
+                <div class="text-center py-20">
+                    <i class="ph-fill ph-check-circle text-8xl text-green-500 mb-6"></i>
+                    <h2 class="text-3xl font-bold mb-4">Order Placed Successfully!</h2>
+                    <p class="text-lg text-gray-600 mb-8">Thank you for your order. Your food is on its way!</p>
+                    <button id="back-home-button" class="bg-orange-600 text-white py-3 px-6 rounded-lg font-bold hover:bg-orange-700 transition duration-300">
+                        Order More
+                    </button>
+                </div>
+            </section>
+
+        </main>
+        
+        <!-- Floating Cart Button (Mobile) -->
+        <button id="floating-cart-button" class="fixed bottom-4 right-4 bg-orange-600 text-white p-4 rounded-full shadow-lg md:hidden hidden items-center justify-center space-x-2">
+            <i class="ph ph-shopping-cart text-2xl"></i>
+            <span class="font-bold">View Cart (<span id="floating-cart-count">0</span>)</span>
+            <span id="floating-cart-total" class="font-bold">₹0.00</span>
+        </button>
+
+    </div> <!-- End #app -->
+
+    <!-- Custom Modal for Messages -->
+    <div id="message-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center">
+            <p id="modal-message" class="text-lg mb-6"></p>
+            <button id="modal-close" class="bg-orange-600 text-white py-2 px-6 rounded-lg font-bold hover:bg-orange-700 transition duration-300">
+                OK
+            </button>
+        </div>
+    </div>
+
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc, 
+            collection, query, where, onSnapshot, writeBatch, setLogLevel
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- MOCK DATA (for seeding database) ---
+        const restaurantsData = [
+            { id: "1", name: "The Curry Leaf", cuisine: "North Indian, Mughlai", rating: 4.5, image: "https://placehold.co/600x400/f97316/white?text=Indian+Food" },
+            { id: "2", name: "Pizza Central", cuisine: "Pizza, Italian, Fast Food", rating: 4.2, image: "https://placehold.co/600x400/ef4444/white?text=Pizza" },
+            { id: "3", name: "Wok Dynasty", cuisine: "Chinese, Asian", rating: 4.7, image: "https://placehold.co/600x400/22c55e/white?text=Chinese" },
+            { id: "4", name: "Burger Barn", cuisine: "Burgers, American", rating: 4.0, image: "https://placehold.co/600x400/eab308/white?text=Burgers" },
+            { id: "5", name: "Healthy Bites", cuisine: "Salads, Healthy", rating: 4.8, image: "https://placehold.co/600x400/10b981/white?text=Salad" },
+            { id: "6", name: "Dolce Vita", cuisine: "Desserts, Bakery", rating: 4.6, image: "https://placehold.co/600x400/ec4899/white?text=Desserts" },
+        ];
+
+        const menusData = {
+            "1": [
+                { id: "101", name: "Butter Chicken", price: 350 }, { id: "102", name: "Paneer Tikka", price: 280 }, { id: "103", name: "Dal Makhani", price: 220 }, { id: "104", name: "Garlic Naan", price: 60 },
+            ],
+            "2": [
+                { id: "201", name: "Margherita Pizza", price: 299 }, { id: "202", name: "Pepperoni Pizza", price: 349 }, { id: "203", name: "Garlic Breadsticks", price: 150 }, { id: "204", name: "Choco Lava Cake", price: 99 },
+            ],
+            "3": [
+                { id: "301", name: "Chilli Chicken", price: 260 }, { id: "302", name: "Veg Hakka Noodles", price: 210 }, { id: "303", name: "Manchurian Gravy", price: 240 }, { id: "304", name: "Spring Rolls", price: 180 },
+            ],
+            "4": [
+                { id: "401", name: "Classic Cheeseburger", price: 199 }, { id: "402", name: "Spicy Chicken Burger", price: 229 }, { id: "403", name: "Fries", price: 99 }, { id: "404", name: "Oreo Shake", price: 149 },
+            ],
+            "5": [
+                { id: "501", name: "Quinoa Salad", price: 320 }, { id: "502", name: "Avocado Toast", price: 280 }, { id: "503", name: "Green Smoothie", price: 190 },
+            ],
+            "6": [
+                { id: "601", name: "Red Velvet Pastry", price: 150 }, { id: "602", name: "Chocolate Truffle", price: 180 }, { id: "603", name: "Blueberry Cheesecake", price: 250 },
+            ],
+        };
+
+        // --- APPLICATION STATE ---
+        let db, auth, userId;
+        let currentCart = []; // Local copy of cart, updated by listener
+        let cartListener = null; // To unsubscribe from onSnapshot
+        let restaurantCollectionPath, usersCollectionPath;
+
+        // --- DOM Elements ---
+        const pages = document.querySelectorAll('.page');
+        const restaurantList = document.getElementById('restaurant-list');
+        const pageMenu = document.getElementById('page-menu');
+        const pageCart = document.getElementById('page-cart');
+        const cartButton = document.getElementById('cart-button');
+        const cartCount = document.getElementById('cart-count');
+        const logo = document.getElementById('logo');
+        const floatingCartButton = document.getElementById('floating-cart-button');
+        const floatingCartCount = document.getElementById('floating-cart-count');
+        const floatingCartTotal = document.getElementById('floating-cart-total');
+        const modal = document.getElementById('message-modal');
+        const modalMessage = document.getElementById('modal-message');
+        const modalClose = document.getElementById('modal-close');
+        const checkoutSummary = document.getElementById('checkout-summary');
+        const checkoutTotal = document.getElementById('checkout-total');
+        const simulatePaymentButton = document.getElementById('simulate-payment-button');
+        const backHomeButton = document.getElementById('back-home-button');
+        // --- NEW PAYMENT TAB ELEMENTS ---
+        const tabCard = document.getElementById('tab-card');
+        const tabUpi = document.getElementById('tab-upi');
+        const contentCard = document.getElementById('content-card');
+        const contentUpi = document.getElementById('content-upi');
+
+        // --- NAVIGATION ---
+        function showPage(pageId) {
+            pages.forEach(page => {
+                page.classList.toggle('active', page.id === pageId);
+            });
+            window.scrollTo(0, 0); // Scroll to top on page change
+        }
+
+        // --- MESSAGE MODAL ---
+        function showModal(message) {
+            modalMessage.textContent = message;
+            modal.classList.remove('hidden');
+        }
+        modalClose.addEventListener('click', () => modal.classList.add('hidden'));
+
+        // --- FIREBASE & APP INITIALIZATION ---
+
+        async function initFirebase() {
+            try {
+                // Get app ID and config from global vars
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+
+                if (!firebaseConfig.apiKey) {
+                    showModal("Firebase configuration is missing. The app cannot load data.");
+                    console.error("Firebase config missing");
+                    return;
+                }
+                
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                setLogLevel('Debug'); // Enable Firestore logging
+
+                // Define collection paths
+                restaurantCollectionPath = `artifacts/${appId}/public/data/restaurants`;
+                usersCollectionPath = `artifacts/${appId}/users`;
+
+                // Listen for auth state changes
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        console.log("User signed in:", userId);
+                        
+                        // User is signed in, now we can load data
+                        await seedDatabase();
+                        await renderRestaurantList();
+                        listenToCart();
+
+                    } else {
+                        console.log("User not signed in.");
+                        userId = null;
+                        if(cartListener) cartListener(); // Stop listening to cart
+                        currentCart = [];
+                        updateCartUI();
+                    }
+                });
+
+                // Sign in
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+            } catch (error) {
+                console.error("Error initializing Firebase:", error);
+                showModal(`Error: ${error.message}`);
+            }
+        }
+        
+        /**
+         * Checks if the database is empty and seeds it with mock data.
+         */
+        async function seedDatabase() {
+            if (!db) return;
+            try {
+                const restoRef = collection(db, restaurantCollectionPath);
+                const snapshot = await getDocs(query(restoRef));
+                
+                if (snapshot.empty) {
+                    console.log("Database is empty. Seeding...");
+                    showModal("Setting up restaurants for the first time...");
+                    const batch = writeBatch(db);
+
+                    // Add restaurants
+                    for (const resto of restaurantsData) {
+                        const restoDocRef = doc(db, restaurantCollectionPath, resto.id);
+                        batch.set(restoDocRef, resto);
+
+                        // Add menus as subcollections
+                        const menuItems = menusData[resto.id] || [];
+                        for (const item of menuItems) {
+                            const menuDocRef = doc(db, `${restaurantCollectionPath}/${resto.id}/menu`, item.id);
+                            batch.set(menuDocRef, item);
+                        }
+                    }
+                    await batch.commit();
+                    console.log("Database seeded successfully.");
+                    showModal("Restaurants are ready!");
+                } else {
+                    console.log("Database already contains data. Skipping seed.");
+                }
+            } catch (error) {
+                console.error("Error seeding database:", error);
+                showModal(`Error checking database: ${error.message}`);
+            }
+        }
+
+        // --- RENDER FUNCTIONS (Data from Firestore) ---
+
+        /**
+         * Renders the list of restaurants from Firestore.
+         */
+        async function renderRestaurantList() {
+            if (!db) return;
+            
+            restaurantList.innerHTML = '<div class="loader col-span-full"></div>'; // Show loader
+            try {
+                const querySnapshot = await getDocs(query(collection(db, restaurantCollectionPath)));
+                restaurantList.innerHTML = ''; // Clear loader
+                
+                if (querySnapshot.empty) {
+                    restaurantList.innerHTML = '<p class="col-span-full text-center">No restaurants found. Please check setup.</p>';
+                    return;
+                }
+
+                querySnapshot.forEach(doc => {
+                    const resto = doc.data();
+                    const card = document.createElement('div');
+                    card.className = 'bg-white rounded-lg shadow-md overflow-hidden transform hover:scale-105 transition duration-300 cursor-pointer';
+                    card.innerHTML = `
+                        <img src="${resto.image}" alt="${resto.name}" class="h-48 w-full object-cover" onerror="this.src='https://placehold.co/600x400?text=Image+Missing'">
+                        <div class="p-4">
+                            <h3 class="text-xl font-bold mb-1">${resto.name}</h3>
+                            <p class="text-gray-600 text-sm mb-2">${resto.cuisine}</p>
+                            <div class="flex items-center space-x-1">
+                                <i class="ph-fill ph-star text-yellow-400"></i>
+                                <span class="font-bold text-gray-800">${resto.rating}</span>
+                            </div>
+                        </div>
+                    `;
+                    card.addEventListener('click', () => showMenuPage(doc.id, resto));
+                    restaurantList.appendChild(card);
+                });
+            } catch (error) {
+                console.error("Error fetching restaurants:", error);
+                restaurantList.innerHTML = `<p class="col-span-full text-center text-red-500">Error loading restaurants: ${error.message}</p>`;
+            }
+            showPage('page-home');
+        }
+
+        /**
+         * Shows the menu page for a specific restaurant.
+         */
+        async function showMenuPage(restaurantId, restoData) {
+            if (!db) return;
+            
+            pageMenu.innerHTML = `<div class="loader"></div>`; // Show loader
+            showPage('page-menu');
+            
+            try {
+                // Get menu items from subcollection
+                const menuQuery = query(collection(db, `${restaurantCollectionPath}/${restaurantId}/menu`));
+                const menuSnapshot = await getDocs(menuQuery);
+                
+                let itemsHtml = '';
+                menuSnapshot.forEach(doc => {
+                    const item = { id: doc.id, ...doc.data() };
+                    itemsHtml += `
+                        <div class="flex justify-between items-center py-4 border-b">
+                            <div>
+                                <h4 class="text-lg font-semibold">${item.name}</h4>
+                                <p class="text-md text-gray-700">₹${item.price.toFixed(2)}</p>
+                            </div>
+                            <button data-item='${JSON.stringify(item)}' class="add-to-cart-btn bg-orange-100 text-orange-600 font-bold py-2 px-4 rounded-lg hover:bg-orange-200 transition">
+                                ADD
+                            </button>
+                        </div>
+                    `;
+                });
+
+                pageMenu.innerHTML = `
+                    <button id="back-to-home" class="mb-4 text-gray-600 hover:text-black">
+                        <i class="ph ph-arrow-left mr-2"></i>Back to restaurants
+                    </button>
+                    <div class="flex items-center mb-6">
+                        <img src="${restoData.image}" alt="${restoData.name}" class="h-24 w-24 rounded-lg object-cover mr-4" onerror="this.src='https://placehold.co/400x400?text=Image+Missing'">
+                        <div>
+                            <h2 class="text-3xl font-bold">${restoData.name}</h2>
+                            <p class="text-gray-600">${restoData.cuisine}</p>
+                            <div class="flex items-center space-x-1 mt-1">
+                                <i class="ph-fill ph-star text-yellow-400"></i>
+                                <span class="font-bold text-gray-800">${restoData.rating}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Menu</h3>
+                    <div class="space-y-4">${itemsHtml || '<p>No menu items found.</p>'}</div>
+                `;
+
+                // Add event listeners
+                document.getElementById('back-to-home').addEventListener('click', renderRestaurantList);
+                pageMenu.querySelectorAll('.add-to-cart-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const item = JSON.parse(e.currentTarget.dataset.item);
+                        addToCart(item);
+                    });
+                });
+
+            } catch (error) {
+                console.error("Error fetching menu:", error);
+                pageMenu.innerHTML = `<p class="text-center text-red-500">Error loading menu: ${error.message}</p>`;
+            }
+        }
+        
+        /**
+         * Renders the cart page based on the currentCart state.
+         * This function is called by the onSnapshot listener.
+         */
+        function renderCartPageContent() {
+            if (currentCart.length === 0) {
+                pageCart.innerHTML = `
+                    <div class="text-center py-20">
+                        <i class="ph ph-shopping-cart text-8xl text-gray-300 mb-6"></i>
+                        <h2 class="text-3xl font-bold mb-4">Your cart is empty</h2>
+                        <p class="text-lg text-gray-600 mb-8">Add something from the menu to get started!</p>
+                        <button id="cart-back-to-home" class="bg-orange-600 text-white py-3 px-6 rounded-lg font-bold hover:bg-orange-700 transition duration-300">
+                            See Restaurants
+                        </button>
+                    </div>
+                `;
+                document.getElementById('cart-back-to-home').addEventListener('click', renderRestaurantList);
+            } else {
+                let itemsHtml = currentCart.map(item => `
+                    <div class="flex justify-between items-center py-4 border-b">
+                        <div>
+                            <h4 class="text-lg font-semibold">${item.name}</h4>
+                            <p class="text-md text-gray-700">₹${item.price.toFixed(2)}</p>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <button data-cart-item-id="${item.id}" data-qty="${item.quantity}" class="decrease-qty-btn bg-gray-200 text-gray-700 w-8 h-8 rounded-full font-bold">-</button>
+                            <span class="font-bold w-6 text-center">${item.quantity}</span>
+                            <button data-cart-item-id="${item.id}" data-qty="${item.quantity}" class="increase-qty-btn bg-orange-600 text-white w-8 h-8 rounded-full font-bold">+</button>
+                        </div>
+                    </div>
+                `).join('');
+
+                const { subtotal, deliveryFee, total } = calculateTotal(currentCart);
+
+                pageCart.innerHTML = `
+                    <h2 class="text-3xl font-bold mb-6">Your Cart</h2>
+                    <div class="space-y-4 mb-6">${itemsHtml}</div>
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-xl font-semibold mb-4">Bill Details</h3>
+                        <div class="space-y-2">
+                            <div class="flex justify-between">
+                                <span>Item Total</span>
+                                <span>₹${subtotal.toFixed(2)}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Delivery Fee</span>
+                                <span>₹${deliveryFee.toFixed(2)}</span>
+                            </div>
+                            <div class="flex justify-between text-lg font-bold border-t pt-2 mt-2">
+                                <span>Total</span>
+                                <span>₹${total.toFixed(2)}</span>
+                            </div>
+                        </div>
+                        <button id="checkout-button" class="mt-6 w-full bg-green-600 text-white py-3 rounded-lg font-bold text-lg hover:bg-green-700 transition">
+                            Proceed to Checkout
+                        </button>
+                    </div>
+                `;
+
+                // Add event listeners
+                pageCart.querySelectorAll('.increase-qty-btn').forEach(btn => btn.addEventListener('click', e => updateQuantity(e.currentTarget.dataset.cartItemId, 1, parseInt(e.currentTarget.dataset.qty))));
+                pageCart.querySelectorAll('.decrease-qty-btn').forEach(btn => btn.addEventListener('click', e => updateQuantity(e.currentTarget.dataset.cartItemId, -1, parseInt(e.currentTarget.dataset.qty))));
+                document.getElementById('checkout-button').addEventListener('click', showCheckoutPage);
+            }
+        }
+        
+        /**
+         * Shows the final checkout page
+         */
+        function showCheckoutPage() {
+            const { subtotal, deliveryFee, total } = calculateTotal(currentCart);
+            
+            checkoutSummary.innerHTML = `
+                <div class="flex justify-between">
+                    <span>Item Total</span>
+                    <span>₹${subtotal.toFixed(2)}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Delivery Fee</span>
+                    <span>₹${deliveryFee.toFixed(2)}</span>
+                </div>
+            `;
+            checkoutTotal.textContent = `₹${total.toFixed(2)}`;
+            
+            showPage('page-checkout');
+        }
+
+        // --- CART LOGIC (Firestore) ---
+
+        /**
+         * Listens for real-time changes to the user's cart.
+         */
+        function listenToCart() {
+            if (!userId || !db) return;
+
+            // Unsubscribe from any existing listener
+            if (cartListener) cartListener();
+
+            const cartRef = collection(db, `${usersCollectionPath}/${userId}/cart`);
+            cartListener = onSnapshot(cartRef, (snapshot) => {
+                currentCart = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                // Update the UI (header count and floating button)
+                updateCartUI(currentCart);
+
+                // If the cart page is currently active, re-render its contents
+                if (document.getElementById('page-cart').classList.contains('active')) {
+                    renderCartPageContent();
+                }
+            }, (error) => {
+                console.error("Error listening to cart:", error);
+                showModal("Could not sync your cart.");
+            });
+        }
+
+        /**
+         * Adds an item to the Firestore cart collection.
+         */
+        async function addToCart(item) {
+            if (!userId || !db) return;
+
+            try {
+                const cartRef = collection(db, `${usersCollectionPath}/${userId}/cart`);
+                
+                // Check if item already exists in cart
+                const q = query(cartRef, where("menuItemId", "==", item.id));
+                const snapshot = await getDocs(q);
+
+                if (snapshot.empty) {
+                    // Add new item
+                    await addDoc(cartRef, {
+                        menuItemId: item.id,
+                        name: item.name,
+                        price: item.price,
+                        quantity: 1
+                    });
+                } else {
+                    // Update existing item quantity
+                    const docRef = snapshot.docs[0].ref;
+                    const newQty = snapshot.docs[0].data().quantity + 1;
+                    await updateDoc(docRef, { quantity: newQty });
+                }
+                showModal(`${item.name} added to cart!`);
+
+            } catch (error) {
+                console.error("Error adding to cart:", error);
+                showModal(`Error adding item: ${error.message}`);
+            }
+        }
+
+        /**
+         * Updates item quantity in Firestore or deletes if qty is 0.
+         */
+        async function updateQuantity(cartItemId, change, currentQty) {
+            if (!userId || !db) return;
+
+            const docRef = doc(db, `${usersCollectionPath}/${userId}/cart`, cartItemId);
+            const newQty = currentQty + change;
+
+            try {
+                if (newQty <= 0) {
+                    await deleteDoc(docRef);
+                } else {
+                    await updateDoc(docRef, { quantity: newQty });
+                }
+            } catch (error) {
+                console.error("Error updating quantity:", error);
+                showModal(`Error updating cart: ${error.message}`);
+            }
+        }
+
+        /**
+         * Clears all items from the user's cart in Firestore.
+         */
+        async function clearCart() {
+            if (!userId || !db) return;
+            
+            try {
+                const cartRef = collection(db, `${usersCollectionPath}/${userId}/cart`);
+                const snapshot = await getDocs(cartRef);
+                
+                if (snapshot.empty) return;
+
+                const batch = writeBatch(db);
+                snapshot.docs.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+                await batch.commit();
+                console.log("Cart cleared.");
+            } catch (error)
+            {
+                console.error("Error clearing cart:", error);
+                showModal(`Error clearing cart: ${error.message}`);
+            }
+        }
+
+        /**
+         * Calculates total from a given cart array.
+         */
+        function calculateTotal(cartData) {
+            const subtotal = cartData.reduce((acc, item) => acc + item.price * item.quantity, 0);
+            const deliveryFee = subtotal > 0 ? 30.00 : 0.00; // Fixed delivery fee
+            const total = subtotal + deliveryFee;
+            return { subtotal, deliveryFee, total };
+        }
+
+        /**
+         * Updates the UI elements (header cart, floating button)
+         */
+        function updateCartUI(cartData) {
+            const totalItems = cartData.reduce((acc, item) => acc + item.quantity, 0);
+            const { total } = calculateTotal(cartData);
+
+            if (totalItems > 0) {
+                cartCount.textContent = totalItems;
+                cartCount.classList.remove('hidden');
+                
+                // Update floating button
+                floatingCartCount.textContent = totalItems;
+                floatingCartTotal.textContent = `₹${total.toFixed(2)}`;
+                floatingCartButton.classList.remove('hidden');
+                floatingCartButton.classList.add('flex');
+
+            } else {
+                cartCount.classList.add('hidden');
+                floatingCartButton.classList.add('hidden');
+                floatingCartButton.classList.remove('flex');
+            }
+        }
+        
+        // --- PAYMENT SIMULATION ---
+        async function simulatePayment() {
+            simulatePaymentButton.disabled = true;
+            simulatePaymentButton.textContent = "Processing...";
+            
+            // In a real app, you would call a backend function here
+            // e.g., `const result = await cloudFunctionCall('createRazorpayOrder', { amount: total });`
+            // This function would securely talk to Razorpay and return a payment ID.
+            
+            setTimeout(async () => {
+                // After successful payment *verification* (also on backend), clear the cart
+                await clearCart();
+                showPage('page-success');
+                simulatePaymentButton.disabled = false;
+                simulatePaymentButton.textContent = "Simulate Payment with Razorpay";
+            }, 2000); // Simulate 2-second payment processing
+        }
+
+        // --- GLOBAL EVENT LISTENERS ---
+        cartButton.addEventListener('click', () => {
+            renderCartPageContent(); // Render the cart content
+            showPage('page-cart');   // Then show the page
+        });
+        
+        floatingCartButton.addEventListener('click', () => {
+            renderCartPageContent(); // Render the cart content
+            showPage('page-cart');   // Then show the page
+        });
+
+        logo.addEventListener('click', (e) => {
+            e.preventDefault();
+            renderRestaurantList();
+        });
+        
+        simulatePaymentButton.addEventListener('click', simulatePayment);
+        backHomeButton.addEventListener('click', renderRestaurantList);
+
+        // --- NEW PAYMENT TAB LISTENERS ---
+        if (tabCard && tabUpi && contentCard && contentUpi) {
+            tabCard.addEventListener('click', () => {
+                // Set card tab to active
+                tabCard.classList.remove('text-gray-500');
+                tabCard.classList.add('text-orange-600', 'border-b-2', 'border-orange-600');
+                // Set UPI tab to inactive
+                tabUpi.classList.remove('text-orange-600', 'border-b-2', 'border-orange-600');
+                tabUpi.classList.add('text-gray-500');
+
+                // Show card content, hide UPI content
+                contentCard.classList.remove('hidden');
+                contentUpi.classList.add('hidden');
+            });
+
+            tabUpi.addEventListener('click', () => {
+                // Set UPI tab to active
+                tabUpi.classList.remove('text-gray-500');
+                tabUpi.classList.add('text-orange-600', 'border-b-2', 'border-orange-600');
+                // Set card tab to inactive
+                tabCard.classList.remove('text-orange-600', 'border-b-2', 'border-orange-600');
+                tabCard.classList.add('text-gray-500');
+
+                // Show UPI content, hide card content
+                contentUpi.classList.remove('hidden');
+                contentCard.classList.add('hidden');
+            });
+        }
+
+        // --- INITIALIZATION ---
+        // Start the application by initializing Firebase
+        initFirebase();
+
+    </script>
+</body>
+</html>
